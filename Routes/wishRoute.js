@@ -6,16 +6,16 @@ import { check, validationResult } from "express-validator";
 const knex = initknex(configuration);
 const router = express.Router();
 
-router.get("/", async (req, res) => {
+router.get("/", async (_req, res) => {
   try {
     const wishes = await knex("wishes")
       .select("id", "name", "message", "gif_url", "created_at")
       .orderBy("created_at", "desc");
 
-    res.status(200).json(wishes);
+    return res.status(200).json(wishes);
   } catch (error) {
     console.error("error fetching wishes", error);
-    res.status(500).json({ message: "error retrieving wishes" });
+    return res.status(500).json({ message: "error retrieving wishes" });
   }
 });
 
@@ -28,7 +28,7 @@ router.post(
   ],
   async (req, res) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty) {
+    if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
@@ -40,11 +40,11 @@ router.post(
         message,
         gif_url,
         likes: 0,
-        created_at: new Date().toISOString(),
       });
 
-      const [newWish] = await knex("wishes")
+      const newWish = await knex("wishes")
         .select("id", "name", "gif_url", "likes", "created_at")
+        .where({ id: newWishId })
         .first();
 
       return res.status(201).json(newWish);
@@ -55,5 +55,52 @@ router.post(
     }
   }
 );
+
+router.patch("/:id/like", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const existingWish = await knex("wishes").where({ id }).first();
+
+    if (!existingWish) {
+      return res.status(404).json({ message: "wish not found" });
+    }
+
+    await knex("wishes")
+      .where({ id })
+      .update({ likes: existingWish.likes + 1 });
+
+    const updatedWish = await knex("wishes")
+      .select("id", "name", "message", "gif_url", "likes", "created_at")
+      .where({ id })
+      .first();
+
+    return res.status(200).json(updatedWish);
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ meaasge: "Server error while updating likes" });
+  }
+});
+
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const existingWish = await knex("wishes").where({ id }).first();
+
+    if (!existingWish) {
+      return res.status(404).json({ message: "wish not found" });
+    }
+
+    await knex("wishes").where({ id }).del();
+
+    return res.status(200).json({ message: "wish deleted successfully" });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Server error while deleting wish" });
+  }
+});
 
 export default router;

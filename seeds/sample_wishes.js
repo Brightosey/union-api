@@ -23,7 +23,7 @@ exports.seed = async function (knex) {
     {
       name: "Dayo",
       message: "To forever and always 💍",
-      gif_url: null,
+      gif_url: "https://media.giphy.com/media/3o7abldj0b3rxrZUxW/giphy.gif",
       likes: 0,
     },
   ]);
