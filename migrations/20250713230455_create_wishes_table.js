@@ -1,22 +1,14 @@
-/**
- * @param { import("knex").Knex } knex
- * @returns { Promise<void> }
- */
-exports.up = function (knex) {
-  return knex.schema.createTable("wishes", function (table) {
-    table.increments("id").primary(); // Auto-incrementing ID
-    table.string("name"); // Name of the person submitting
-    table.text("message").notNullable(); // Message content
-    table.string("gif_url"); // Optional: GIF URL (from Giphy)
-    table.integer("likes").defaultTo(0); // Like counter (starts at 0)
-    table.timestamps(true, true); // created_at and updated_at
+export async function up(knex) {
+  await knex.schema.createTable("wishes", (table) => {
+    table.increments("id").primary();
+    table.string("name");
+    table.text("message");
+    table.string("gif_url");
+    table.integer("likes").defaultTo(0);
+    table.timestamp("created_at").defaultTo(knex.fn.now());
   });
-};
+}
 
-/**
- * @param { import("knex").Knex } knex
- * @returns { Promise<void> }
- */
-exports.down = function (knex) {
-  return knex.schema.dropTableIfExists("wishes");
-};
+export async function down(knex) {
+  await knex.schema.dropTable("wishes");
+}
