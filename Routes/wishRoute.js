@@ -58,6 +58,7 @@ router.post(
 
 router.patch("/:id/like", async (req, res) => {
   const { id } = req.params;
+  const { liked } = req.body;
 
   try {
     const existingWish = await knex("wishes").where({ id }).first();
@@ -66,9 +67,11 @@ router.patch("/:id/like", async (req, res) => {
       return res.status(404).json({ message: "wish not found" });
     }
 
-    await knex("wishes")
-      .where({ id })
-      .update({ likes: existingWish.likes + 1 });
+    const updatedLikes = liked
+      ? existingWish.likes + 1
+      : Math.max(existingWish.likes - 1, 0);
+
+    await knex("wishes").where({ id }).update({ likes: updatedLikes });
 
     const updatedWish = await knex("wishes")
       .select("id", "name", "message", "gif_url", "likes", "created_at")
@@ -79,7 +82,7 @@ router.patch("/:id/like", async (req, res) => {
   } catch (error) {
     return res
       .status(500)
-      .json({ meaasge: "Server error while updating likes" });
+      .json({ message: "Server error while updating likes" });
   }
 });
 
