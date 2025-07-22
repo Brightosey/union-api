@@ -27,6 +27,7 @@ router.post(
     check("gif_url").notEmpty().withMessage("gif is required"),
   ],
   async (req, res) => {
+    console.log("📥 Incoming request body:", req.body);
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -35,12 +36,16 @@ router.post(
     const { name, message, gif_url } = req.body;
 
     try {
-      const [newWishId] = await knex("wishes").insert({
-        name,
-        message,
-        gif_url,
-        likes: 0,
-      });
+      const insertedRows = await knex("wishes")
+        .insert({
+          name,
+          message,
+          gif_url,
+          likes: 0,
+        })
+        .returning("id"); // required for PostgreSQL
+
+      const newWishId = insertedRows[0].id;
 
       const newWish = await knex("wishes")
         .select("id", "name", "gif_url", "likes", "created_at")
@@ -49,6 +54,7 @@ router.post(
 
       return res.status(201).json(newWish);
     } catch (error) {
+      console.error("❌ Error while saving wish:", error);
       return res
         .status(500)
         .json({ message: "Server error while saving wish" });
