@@ -27,7 +27,6 @@ router.post(
     check("gif_url").notEmpty().withMessage("gif is required"),
   ],
   async (req, res) => {
-    console.log("📥 Incoming request body:", req.body);
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
